@@ -1,0 +1,70 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           minesweeper
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/gottagofaster236/minesweeper#readme>
+homepage:       https://github.com/gottagofaster236/minesweeper#readme
+bug-reports:    https://github.com/gottagofaster236/minesweeper/issues
+author:         Lev Leontev
+maintainer:     liev.lieontiev@gmail.com
+copyright:      Lev Leontev
+license:        GPL3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/gottagofaster236/minesweeper
+
+library
+  other-modules:
+      Paths_minesweeper
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , mtl
+  default-language: Haskell2010
+
+executable minesweeper-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_minesweeper
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , minesweeper
+    , mtl
+  default-language: Haskell2010
+
+test-suite minesweeper-test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  other-modules:
+      Test.Mines
+      Paths_minesweeper
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HUnit
+    , HUnit-approx
+    , base >=4.7 && <5
+    , hedgehog
+    , minesweeper
+    , mtl
+    , tasty
+    , tasty-discover
+    , tasty-hedgehog
+    , tasty-hunit
+  default-language: Haskell2010
