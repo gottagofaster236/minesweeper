@@ -1,6 +1,11 @@
 module Main (main) where
-import Model.MineField
 import Control.Monad.Random
+
+
+exampleRand :: (RandomGen g) => Rand g Int
+exampleRand = do
+    ret <- getRandomR (100, 123)
+    return ret
 
 
 main :: IO ()

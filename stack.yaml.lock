@@ -3,40 +3,10 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
+packages: []
+snapshots:
 - completed:
-    hackage: MonadRandom-0.5.3@sha256:1972a7302aaa409f0b0cd5ff8f5afda03a5156ceb518c2264b2cf0e362123eb6,1454
-    pantry-tree:
-      size: 709
-      sha256: 170b25262904f658c57d93e4c19b83f2a8ec07ae8646e9b31b7b7da724ceb9de
-  original:
-    hackage: MonadRandom-0.5.3@sha256:1972a7302aaa409f0b0cd5ff8f5afda03a5156ceb518c2264b2cf0e362123eb6,1454
-- completed:
-    hackage: primitive-0.7.4.0@sha256:89b88a3e08493b7727fa4089b0692bfbdf7e1e666ef54635f458644eb8358764,2857
-    pantry-tree:
-      size: 1655
-      sha256: 71a850c658b70e869da19f61615d87d9d6ecec597f0e3d4b498da56559114829
-  original:
-    hackage: primitive-0.7.4.0@sha256:89b88a3e08493b7727fa4089b0692bfbdf7e1e666ef54635f458644eb8358764,2857
-- completed:
-    hackage: random-1.2.1.1@sha256:dea1f11e5569332dc6c8efaad1cb301016a5587b6754943a49f9de08ae0e56d9,6541
-    pantry-tree:
-      size: 1528
-      sha256: 646ee77fe01178837ee928b61ae8653dcf190e9b5353ebebd094079c77a18b76
-  original:
-    hackage: random-1.2.1.1@sha256:dea1f11e5569332dc6c8efaad1cb301016a5587b6754943a49f9de08ae0e56d9,6541
-- completed:
-    hackage: transformers-compat-0.7.2@sha256:044fb9955f63ee138fcebedfdcbe54afe741f2d5892a2d0bdf3a8052bd342643,5601
-    pantry-tree:
-      size: 1724
-      sha256: f49610c6a2faf82111e5d4222576f4afbcfa904bf56665232c5aa077dfc7578f
-  original:
-    hackage: transformers-compat-0.7.2@sha256:044fb9955f63ee138fcebedfdcbe54afe741f2d5892a2d0bdf3a8052bd342643,5601
-- completed:
-    hackage: splitmix-0.1.0.4@sha256:804e2574bc7e32d08cbab91e47ee6287b4df7d50851d73f9e778f94a9a7814c7,6521
-    pantry-tree:
-      size: 1519
-      sha256: b56f706c092dc0ac4875ef45bd18719386358c56667f6b604a733b66f9e4657f
-  original:
-    hackage: splitmix-0.1.0.4@sha256:804e2574bc7e32d08cbab91e47ee6287b4df7d50851d73f9e778f94a9a7814c7,6521
-snapshots: []
+    sha256: e8cdd1d4ff5aaa42bc15ba641a506cbee4cf2073758c51acec800728e42c0aa4
+    size: 646690
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/11/4.yaml
+  original: nightly-2022-11-04

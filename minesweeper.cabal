@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -25,7 +25,7 @@ source-repository head
 
 library
   exposed-modules:
-      Model.MineField
+      MineField
   other-modules:
       Paths_minesweeper
   hs-source-dirs:
@@ -35,6 +35,7 @@ library
       MonadRandom
     , base >=4.7 && <5
     , mtl
+    , random-shuffle
   default-language: Haskell2010
 
 executable minesweeper-exe
@@ -49,13 +50,14 @@ executable minesweeper-exe
     , base >=4.7 && <5
     , minesweeper
     , mtl
+    , random-shuffle
   default-language: Haskell2010
 
 test-suite minesweeper-test
   type: exitcode-stdio-1.0
   main-is: Test.hs
   other-modules:
-      Test.Mines
+      Test.MineField
       Paths_minesweeper
   hs-source-dirs:
       test
@@ -68,6 +70,7 @@ test-suite minesweeper-test
     , hedgehog
     , minesweeper
     , mtl
+    , random-shuffle
     , tasty
     , tasty-discover
     , tasty-hedgehog
