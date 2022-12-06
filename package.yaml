@@ -1,7 +1,7 @@
 name:                minesweeper
 version:             0.1.0.0
 github:              "gottagofaster236/minesweeper"
-license:             GPL3
+license:             GPL-3
 author:              "Lev Leontev"
 maintainer:          "liev.lieontiev@gmail.com"
 copyright:           "Lev Leontev"
@@ -24,6 +24,7 @@ dependencies:
 - mtl
 - MonadRandom
 - random-shuffle
+- containers
 
 ghc-options:
 - -Wall
