@@ -7,6 +7,8 @@ import Control.Monad.Random (Rand, RandomGen, evalRand, mkStdGen)
 import GHC.Arr
 import MineField
 import Test.Tasty.HUnit
+import Data.Aeson (encode)
+import Data.ByteString.Lazy.Internal (unpackChars)
 
 gen = mkStdGen 0
 
@@ -120,6 +122,10 @@ unit_getGameState = do
     Running @=? getGameState runningField1
     Running @=? getGameState runningField2
 
+unit_mineFieldJson = do
+    jsonSmallField2 @=? unpackChars (encode smallField2)
+    jsonOpenMineResultSmallField2 @=? unpackChars (encode openMineResultSmallField2)
+
 defaultField = evalRand (generateMineField (10, 10) 10) gen
 
 oneByOneField =
@@ -190,8 +196,10 @@ smallField2 =
 
 cellLabelsSmallField2 = "UUFU"
 
--- _🚩
--- _💥
+jsonSmallField2 = "{\"cellLabels\":[\"UU\",\"FU\"],\"gameState\":\"Running\"}"
+
+-- 1🚩
+-- 1💥
 openMineResultSmallField2 =
     MineField
         { cells =
@@ -203,6 +211,8 @@ openMineResultSmallField2 =
                   , ((1, 1), Cell {cellState = Opened, isMine = True})
                   ]
         }
+
+jsonOpenMineResultSmallField2 = "{\"cellLabels\":[\"11\",\"FM\"],\"gameState\":\"Lost\"}"
 
 cellLabelsOpenMineResultSmallField2 = "11FM"
 

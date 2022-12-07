@@ -180,9 +180,13 @@ getGameState field
             (\cell -> cellState cell == Unopened && (not . isMine) cell)
             (cells field)
 getGameState _ = Won
---instance ToJSON MineField where
---       toJSON field = object [ "gameState" .= show (getGameState field),
---           "cells" .= 
---        ]
---    where
---        cellLabel :: 
+
+instance ToJSON MineField where
+    toJSON field = do
+        object
+            [ "gameState" .= show (getGameState field)
+            , "cellLabels" .=
+              [ [cellLabel field (x, y) | y <- [0 .. height field - 1]]
+              | x <- [0 .. width field - 1]
+              ]
+            ]
