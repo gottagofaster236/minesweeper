@@ -26,6 +26,11 @@ dependencies:
 - random-shuffle
 - containers
 - array
+- wai
+- http-types
+- bytestring
+- warp
+- aeson
 
 ghc-options:
 - -Wall

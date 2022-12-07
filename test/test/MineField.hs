@@ -11,8 +11,16 @@ import GHC.Arr
 gen = mkStdGen 0
 
 unit_cellNumbers = do
-    cellNumbersMediumField2 @=? cellNumbers mediumField2
+    cellNumbersMediumField2 @=? map (cellNumber mediumField2) (indices $ cells mediumField2)
 
+unit_cellLabels = do
+        cellLabelsOpenMineResultSmallField1 @=? cellLabels openMineResultSmallField1
+        cellLabelsOpenMineResultSmallField2 @=? cellLabels openMineResultSmallField2
+        cellLabelsSmallField2 @=? cellLabels smallField2
+    where
+        cellLabels field = map (cellLabel field) (indices $ cells field)
+
+unit_generateMineFieldHasCorrectMinesCount :: IO ()
 unit_generateMineFieldHasCorrectMinesCount = do
         let mineField = evalRand (generateMineField (50, 100) 30) gen
         let mineCells = cells mineField
@@ -138,6 +146,8 @@ openMineResultSmallField1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
     ]
 }
 
+cellLabelsOpenMineResultSmallField1 = "111M"
+
 -- ▢🚩
 -- ▢💣
 smallField2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
@@ -148,6 +158,8 @@ smallField2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
     ]
 }
 
+cellLabelsSmallField2 = "UUFU"
+
 -- _🚩
 -- _💥
 openMineResultSmallField2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
@@ -157,6 +169,8 @@ openMineResultSmallField2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
         ((1, 1), Cell { cellState = Opened, isMine = True})
     ]
 }
+
+cellLabelsOpenMineResultSmallField2 = "11FM"
 
 -- ▢▢▢
 -- ▢▢▢
@@ -185,7 +199,7 @@ openResultMediumField2 = MineField { cells = cells openResultMediumField1//[
     ] 
 }
 
-cellNumbersMediumField2 = listArray ((0, 0), (3 - 1, 3 - 1)) [0, 0, 0, 1, 1, 1, 1, 0, 1]
+cellNumbersMediumField2 = [0, 0, 0, 1, 1, 1, 1, 0, 1]
 
 -- ▢▢🚩
 -- ▢🚩▢

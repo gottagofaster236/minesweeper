@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       MineField
+      Server
   other-modules:
       Paths_minesweeper
   hs-source-dirs:
@@ -33,11 +34,16 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       MonadRandom
+    , aeson
     , array
     , base >=4.7 && <5
+    , bytestring
     , containers
+    , http-types
     , mtl
     , random-shuffle
+    , wai
+    , warp
   default-language: Haskell2010
 
 executable minesweeper-exe
@@ -49,12 +55,17 @@ executable minesweeper-exe
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MonadRandom
+    , aeson
     , array
     , base >=4.7 && <5
+    , bytestring
     , containers
+    , http-types
     , minesweeper
     , mtl
     , random-shuffle
+    , wai
+    , warp
   default-language: Haskell2010
 
 test-suite minesweeper-test
@@ -70,10 +81,13 @@ test-suite minesweeper-test
       HUnit
     , HUnit-approx
     , MonadRandom
+    , aeson
     , array
     , base >=4.7 && <5
+    , bytestring
     , containers
     , hedgehog
+    , http-types
     , minesweeper
     , mtl
     , random-shuffle
@@ -81,4 +95,6 @@ test-suite minesweeper-test
     , tasty-discover
     , tasty-hedgehog
     , tasty-hunit
+    , wai
+    , warp
   default-language: Haskell2010

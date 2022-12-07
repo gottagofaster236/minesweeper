@@ -1,10 +1,14 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module MineField(CellState(..), Cell(..), MineField(..), GameState(..),
-    generateMineField, width, height, cellNumbers, openCell, flagCell, countMinesLeft, getGameState) where
+    generateMineField, width, height, cellNumber, cellLabel, openCell, flagCell, countMinesLeft, getGameState) where
 import Data.Array
 import Control.Monad.Random
 import System.Random.Shuffle
 import qualified Data.Set as Set
 import Control.Monad.State
+import Data.Aeson (ToJSON (toJSON), (.=))
+import Data.Aeson.Types (object)
 
 data CellState = Unopened | Opened | Flagged
     deriving (Show, Eq)
@@ -37,17 +41,24 @@ height field = 1 + snd (snd $ bounds $ cells field)
 isIndexInRange :: MineField -> (Int, Int) -> Bool
 isIndexInRange field = inRange (bounds (cells field))
 
-cellNumbers :: MineField -> Array (Int, Int) Int
-cellNumbers field =
-        listArray (bounds (cells field)) [ neighboringMineCount position | position <- indices (cells field) ]
+cellNumber :: MineField -> (Int, Int) -> Int
+cellNumber field (x, y) = sum $ map (fromEnum . safeIsMine)
+        [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1), (x - 1, y - 1), (x - 1, y + 1), (x + 1, y - 1), (x + 1, y + 1)]
     where
-        neighboringMineCount :: (Int, Int) -> Int
-        neighboringMineCount (x, y) = sum $ map (fromEnum . safeIsMine)
-            [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1), (x - 1, y - 1), (x - 1, y + 1), (x + 1, y - 1), (x + 1, y + 1)]
-
         safeIsMine :: (Int, Int) -> Bool
         safeIsMine position | isIndexInRange field position = isMine $ cells field!position
         safeIsMine _ = False
+
+cellLabel :: MineField -> (Int, Int) -> Char
+cellLabel field position = do
+    let cell = cells field!position
+    case cellState cell of
+        Unopened -> 'U'
+        Flagged -> 'F'
+        Opened -> if isMine cell then 
+                'M'
+            else 
+                toEnum (cellNumber field position + fromEnum '0')
 
 openCell :: MineField -> (Int, Int) -> MineField
 openCell field position | cellState (cells field!position) /= Unopened = field 
@@ -77,7 +88,7 @@ openCell field position = do
                 return ()
             else do
                 put $ Set.insert (x, y) visitedPositions
-                when (cellNumbers field!(x, y) == 0) $ do
+                when (cellNumber field (x, y) == 0) $ do
                     findPositionsToOpen (x - 1, y)
                     findPositionsToOpen (x + 1, y)
                     findPositionsToOpen (x, y - 1)
@@ -109,3 +120,10 @@ getGameState field | hasUnopenedNonMines = Running
     where 
         hasUnopenedNonMines = any (\cell -> cellState cell == Unopened && (not . isMine) cell) (cells field)
 getGameState _ = Won
+
+--instance ToJSON MineField where
+--       toJSON field = object [ "gameState" .= show (getGameState field),
+--           "cells" .= 
+--        ]
+--    where
+--        cellLabel :: 
