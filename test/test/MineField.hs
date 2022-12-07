@@ -5,11 +5,13 @@ module Test.MineField where
 import MineField
 import Test.Tasty.HUnit
 import Control.Monad.Random
-    ( Rand, RandomGen, evalRand, mkStdGen, StdGen )
+    ( Rand, RandomGen, evalRand, mkStdGen )
 import GHC.Arr
 
-gen :: StdGen
 gen = mkStdGen 0
+
+unit_cellNumbers = do
+    cellNumbersMediumField2 @=? cellNumbers mediumField2
 
 unit_generateMineFieldHasCorrectMinesCount = do
         let mineField = evalRand (generateMineField (50, 100) 30) gen
@@ -17,11 +19,8 @@ unit_generateMineFieldHasCorrectMinesCount = do
         ((0, 0), (49, 99)) @=? bounds mineCells
         50 @=? width mineField
         100 @=? height mineField
-        let countMines = sum [boolToInt $ isMine $ cells mineField!(i, j) | i <- [0..49], j <- [0..99]]
+        let countMines = sum [fromEnum $ isMine $ cells mineField!(i, j) | i <- [0..49], j <- [0..99]]
         30 @=? countMines
-    where
-        boolToInt :: Bool -> Int
-        boolToInt b = if b then 1 else 0
 
 unit_generateMineFieldHasUnopenedFields = do
     let mineField = evalRand (generateMineField (123, 321) 7) gen
@@ -43,9 +42,10 @@ unit_openCellOneByOne = do
     Opened @=? cellState (cells openedField!(0, 0))
 
 unit_openSeveralCells = do
-    expectedOpenResult1 @=? openCell smallField1 (0, 1)
-    expectedOpenResult2 @=? openCell smallField2 (0, 1)
-    expectedOpenResult3 @=? openCell smallField3 (0, 1)
+    openResultSmallField1 @=? openCell smallField1 (0, 1)
+    openResultMediumField1 @=? openCell mediumField1 (2, 2)
+    openResultMediumField2 @=? openCell mediumField2 (0, 1)
+    openResultMediumField3 @=? openCell mediumField3 (0, 0)
 
 unit_flagCell = do
     Unopened @=? cellState (cells defaultField!(2, 3))
@@ -59,29 +59,57 @@ unit_openFlaggedCell = do
     let openedFlaggedField = openCell flaggedField (5, 5)
     flaggedField @=? openedFlaggedField
 
+unit_openOpenedCell = do
+    let openedField = openCell defaultField (5, 5)
+    Opened @=? cellState (cells openedField!(5, 5))
+    let openOpenedField = openCell openedField (5, 5)
+    openedField @=? openOpenedField
+
 unit_flagOpenedCell = do
     let openedField = openCell oneByOneField (0, 0)
     Opened @=? cellState (cells openedField!(0, 0))
     let flaggedOpenedField = flagCell openedField (0, 0)
-    openedField @=? flaggedOpenedField
+    Opened @=? cellState (cells flaggedOpenedField!(0, 0))
+
+unit_flagFlaggedCell = do
+    let flaggedField = flagCell oneByOneField (0, 0)
+    Flagged @=? cellState (cells flaggedField!(0, 0))
+    let flaggedFlaggedField = flagCell flaggedField (0, 0)
+    Unopened @=? cellState (cells flaggedFlaggedField!(0, 0))
 
 unit_openCellWithMine = do
-    expectedMineOpenResult1 @=? openCell smallField1 (1, 1)
-    expectedMineOpenResult2 @=? openCell smallField2 (1, 1)
+    openMineResultSmallField1 @=? openCell smallField1 (1, 1)
+    openMineResultSmallField2 @=? openCell smallField2 (1, 1)
 
-defaultField :: MineField
+unit_countMinesLeft = do
+    1 @=? countMinesLeft smallField1
+    let oneFlag = flagCell smallField1 (0, 0)
+    0 @=? countMinesLeft oneFlag
+    let twoFlags = flagCell oneFlag (0, 1)
+    -1 @=? countMinesLeft twoFlags
+    let threeFlags = flagCell twoFlags (1, 1)
+    -2 @=? countMinesLeft threeFlags
+    let twoFlagsAgain = flagCell threeFlags (0, 1)
+    -1 @=? countMinesLeft twoFlagsAgain
+
+unit_getGameState = do
+    Won @=? getGameState winField1
+    Won @=? getGameState winField2
+    Won @=? getGameState winField3
+    Lost @=? getGameState loseField1
+    Lost @=? getGameState loseField2
+    Running @=? getGameState runningField1
+    Running @=? getGameState runningField2
+
 defaultField = evalRand (generateMineField (10, 10) 10) gen
 
-
-oneByOneField :: MineField
 oneByOneField = MineField { cells = array ((0, 0), (1 - 1, 1 - 1)) [
         ((0, 0), Cell { cellState = Unopened, isMine = False})
     ]
 }
 
--- 00
--- 0X
-smallField1 :: MineField
+-- ▢▢
+-- ▢💣
 smallField1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
         ((0, 0), Cell { cellState = Unopened, isMine = False}),
         ((0, 1), Cell { cellState = Unopened, isMine = False}),
@@ -90,21 +118,19 @@ smallField1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
     ]
 }
 
--- __
--- _X
-expectedOpenResult1 :: MineField
-expectedOpenResult1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
-        ((0, 0), Cell { cellState = Opened, isMine = False}),
+-- ▢▢
+-- 1💣
+openResultSmallField1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
+        ((0, 0), Cell { cellState = Unopened, isMine = False}),
         ((0, 1), Cell { cellState = Opened, isMine = False}),
-        ((1, 0), Cell { cellState = Opened, isMine = False}),
+        ((1, 0), Cell { cellState = Unopened, isMine = False}),
         ((1, 1), Cell { cellState = Unopened, isMine = True})
     ]
 }
 
--- __
--- _💥
-expectedMineOpenResult1 :: MineField
-expectedMineOpenResult1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
+-- 11
+-- 1💥
+openMineResultSmallField1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
         ((0, 0), Cell { cellState = Opened, isMine = False}),
         ((0, 1), Cell { cellState = Opened, isMine = False}),
         ((1, 0), Cell { cellState = Opened, isMine = False}),
@@ -112,9 +138,8 @@ expectedMineOpenResult1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
     ]
 }
 
--- 0F
--- 0X
-smallField2 :: MineField
+-- ▢🚩
+-- ▢💣
 smallField2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
         ((0, 0), Cell { cellState = Unopened, isMine = False}),
         ((0, 1), Cell { cellState = Unopened, isMine = False}),
@@ -123,21 +148,9 @@ smallField2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
     ]
 }
 
--- _F
--- _X
-expectedOpenResult2 :: MineField
-expectedOpenResult2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
-        ((0, 0), Cell { cellState = Opened, isMine = False}),
-        ((0, 1), Cell { cellState = Opened, isMine = False}),
-        ((1, 0), Cell { cellState = Flagged, isMine = False}),
-        ((1, 1), Cell { cellState = Unopened, isMine = True})
-    ]
-}
-
--- _F
+-- _🚩
 -- _💥
-expectedMineOpenResult2 :: MineField
-expectedMineOpenResult2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
+openMineResultSmallField2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
         ((0, 0), Cell { cellState = Opened, isMine = False}),
         ((0, 1), Cell { cellState = Opened, isMine = False}),
         ((1, 0), Cell { cellState = Flagged, isMine = False}),
@@ -145,23 +158,121 @@ expectedMineOpenResult2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
     ]
 }
 
--- X0
--- 0X
-smallField3 :: MineField
-smallField3 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
+-- ▢▢▢
+-- ▢▢▢
+-- ▢▢▢
+mediumField1 = MineField { cells = listArray ((0, 0), (3 - 1, 3 - 1)) (repeat Cell { cellState = Unopened, isMine = False }) }
+
+-- ___
+-- ___
+-- ___
+openResultMediumField1 =
+    MineField { cells = listArray ((0, 0), (3 - 1, 3 - 1)) (repeat Cell { cellState = Opened, isMine = False }) }
+
+
+-- ▢▢▢
+-- ▢▢💣
+-- ▢▢▢
+mediumField2 = MineField { cells = cells mediumField1//[((2, 1), Cell { cellState = Unopened, isMine = True })] }
+
+-- _1▢
+-- _1💣
+-- _1▢
+openResultMediumField2 = MineField { cells = cells openResultMediumField1//[
+        ((2, 0), Cell { cellState = Unopened, isMine = False }),
+        ((2, 1), Cell { cellState = Unopened, isMine = True }),
+        ((2, 2), Cell { cellState = Unopened, isMine = False })
+    ] 
+}
+
+cellNumbersMediumField2 = listArray ((0, 0), (3 - 1, 3 - 1)) [0, 0, 0, 1, 1, 1, 1, 0, 1]
+
+-- ▢▢🚩
+-- ▢🚩▢
+-- 🚩▢▢
+mediumField3 = MineField { cells = cells mediumField1//[
+        ((2, 0), Cell { cellState = Flagged, isMine = False }),
+        ((1, 1), Cell { cellState = Flagged, isMine = False }),
+        ((0, 2), Cell { cellState = Flagged, isMine = False })
+    ]
+}
+
+-- __🚩
+-- _🚩▢
+-- 🚩▢▢
+openResultMediumField3 = MineField { cells = cells mediumField3//[
+        ((0, 0), Cell { cellState = Opened, isMine = False }),
+        ((1, 0), Cell { cellState = Opened, isMine = False }),
+        ((0, 1), Cell { cellState = Opened, isMine = False })
+    ] 
+}
+
+-- 11
+-- 1💣
+winField1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
+        ((0, 0), Cell { cellState = Opened, isMine = False}),
+        ((0, 1), Cell { cellState = Opened, isMine = False}),
+        ((1, 0), Cell { cellState = Opened, isMine = False}),
+        ((1, 1), Cell { cellState = Unopened, isMine = True})
+    ]
+}
+
+-- 11
+-- 1🚩
+winField2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
+        ((0, 0), Cell { cellState = Opened, isMine = False}),
+        ((0, 1), Cell { cellState = Opened, isMine = False}),
+        ((1, 0), Cell { cellState = Opened, isMine = False}),
+        ((1, 1), Cell { cellState = Flagged, isMine = True})
+    ]
+}
+
+-- 💣2
+-- 2🚩
+winField3 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
         ((0, 0), Cell { cellState = Unopened, isMine = True}),
-        ((0, 1), Cell { cellState = Unopened, isMine = False}),
+        ((0, 1), Cell { cellState = Opened, isMine = False}),
+        ((1, 0), Cell { cellState = Opened, isMine = False}),
+        ((1, 1), Cell { cellState = Flagged, isMine = True})
+    ]
+}
+
+-- 11
+-- 1💥
+loseField1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
+        ((0, 0), Cell { cellState = Opened, isMine = False}),
+        ((0, 1), Cell { cellState = Opened, isMine = False}),
+        ((1, 0), Cell { cellState = Opened, isMine = False}),
+        ((1, 1), Cell { cellState = Opened, isMine = True})
+    ]
+}
+
+-- 🚩1
+-- 1💥
+loseField2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
+        ((0, 0), Cell { cellState = Flagged, isMine = False}),
+        ((0, 1), Cell { cellState = Opened, isMine = False}),
+        ((1, 0), Cell { cellState = Opened, isMine = False}),
+        ((1, 1), Cell { cellState = Opened, isMine = True})
+    ]
+}
+
+-- 1▢
+-- 1💣
+runningField1 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
+        ((0, 0), Cell { cellState = Opened, isMine = False}),
+        ((0, 1), Cell { cellState = Opened, isMine = False}),
         ((1, 0), Cell { cellState = Unopened, isMine = False}),
         ((1, 1), Cell { cellState = Unopened, isMine = True})
     ]
 }
 
--- X0
--- _X
-expectedOpenResult3 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
-        ((0, 0), Cell { cellState = Unopened, isMine = True}),
+-- 1▢
+-- 1🚩
+runningField2 = MineField { cells = array ((0, 0), (2 - 1, 2 - 1)) [
+        ((0, 0), Cell { cellState = Opened, isMine = False}),
         ((0, 1), Cell { cellState = Opened, isMine = False}),
         ((1, 0), Cell { cellState = Unopened, isMine = False}),
-        ((1, 1), Cell { cellState = Unopened, isMine = True})
+        ((1, 1), Cell { cellState = Flagged, isMine = True})
     ]
 }
