@@ -14,6 +14,7 @@ module MineField
     , flagCell
     , countMinesLeft
     , getGameState
+    , isIndexInRange
     ) where
 
 import Control.Monad.Random
@@ -50,12 +51,15 @@ data GameState
     deriving (Show, Eq)
 
 -- Takes in the size (w, h) of the field and the number of mines.
-generateMineField :: (RandomGen g) => (Int, Int) -> Int -> Rand g MineField
+generateMineField :: (RandomGen g) => (Int, Int) -> Int -> Rand g (Maybe MineField)
+
+generateMineField (fieldWidth, fieldHeight) minesCount
+    | fieldWidth <= 0 || fieldHeight <= 0 || fieldWidth > 50 || fieldWidth > 50
+        || minesCount < 0 || minesCount > fieldWidth * fieldHeight = return Nothing
 generateMineField (fieldWidth, fieldHeight) minesCount = do
-    let cellsCount = fieldWidth * fieldHeight
     let isMineUnshuffled =
             replicate minesCount True ++
-            replicate (cellsCount - minesCount) False
+            replicate (fieldWidth * fieldHeight - minesCount) False
     isMineShuffled <- shuffleM isMineUnshuffled
     let isMine2DArray =
             listArray ((0, 0), (fieldWidth - 1, fieldHeight - 1)) isMineShuffled
@@ -63,7 +67,7 @@ generateMineField (fieldWidth, fieldHeight) minesCount = do
             fmap
                 (\isCellMine -> Cell {cellState = Unopened, isMine = isCellMine})
                 isMine2DArray
-    return MineField {cells = cells2DArray}
+    return $ Just $ MineField {cells = cells2DArray}
 
 width :: MineField -> Int
 width field = 1 + fst (snd $ bounds $ cells field)
@@ -189,4 +193,5 @@ instance ToJSON MineField where
               [ [cellLabel field (x, y) | y <- [0 .. height field - 1]]
               | x <- [0 .. width field - 1]
               ]
+            , "countMinesLeft" .= countMinesLeft field
             ]

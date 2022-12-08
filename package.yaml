@@ -31,6 +31,11 @@ dependencies:
 - bytestring
 - warp
 - aeson
+- scotty
+- stm
+- data-default-class
+- text
+- base-compat-batteries
 
 ghc-options:
 - -Wall

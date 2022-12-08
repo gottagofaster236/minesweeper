@@ -37,11 +37,16 @@ library
     , aeson
     , array
     , base >=4.7 && <5
+    , base-compat-batteries
     , bytestring
     , containers
+    , data-default-class
     , http-types
     , mtl
     , random-shuffle
+    , scotty
+    , stm
+    , text
     , wai
     , warp
   default-language: Haskell2010
@@ -58,12 +63,17 @@ executable minesweeper-exe
     , aeson
     , array
     , base >=4.7 && <5
+    , base-compat-batteries
     , bytestring
     , containers
+    , data-default-class
     , http-types
     , minesweeper
     , mtl
     , random-shuffle
+    , scotty
+    , stm
+    , text
     , wai
     , warp
   default-language: Haskell2010
@@ -84,17 +94,22 @@ test-suite minesweeper-test
     , aeson
     , array
     , base >=4.7 && <5
+    , base-compat-batteries
     , bytestring
     , containers
+    , data-default-class
     , hedgehog
     , http-types
     , minesweeper
     , mtl
     , random-shuffle
+    , scotty
+    , stm
     , tasty
     , tasty-discover
     , tasty-hedgehog
     , tasty-hunit
+    , text
     , wai
     , warp
   default-language: Haskell2010

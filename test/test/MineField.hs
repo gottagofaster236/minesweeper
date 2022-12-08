@@ -7,8 +7,10 @@ import Control.Monad.Random (Rand, RandomGen, evalRand, mkStdGen)
 import GHC.Arr
 import MineField
 import Test.Tasty.HUnit
-import Data.Aeson (encode)
-import Data.ByteString.Lazy.Internal (unpackChars)
+import Data.Aeson (encode, decode)
+import Data.ByteString.Lazy.Internal (packChars)
+import Data.Aeson.Types
+import Data.Maybe
 
 gen = mkStdGen 0
 
@@ -25,21 +27,25 @@ unit_cellLabels = do
 
 unit_generateMineFieldHasCorrectMinesCount :: IO ()
 unit_generateMineFieldHasCorrectMinesCount = do
-    let mineField = evalRand (generateMineField (50, 100) 30) gen
+    mineField <- assertIsJust $ evalRand (generateMineField (30, 40) 30) gen
     let mineCells = cells mineField
-    ((0, 0), (49, 99)) @=? bounds mineCells
-    50 @=? width mineField
-    100 @=? height mineField
+    ((0, 0), (29, 39)) @=? bounds mineCells
+    30 @=? width mineField
+    40 @=? height mineField
     let countMines =
             sum
                 [ fromEnum $ isMine $ cells mineField ! (i, j)
-                | i <- [0 .. 49]
-                , j <- [0 .. 99]
+                | i <- [0 .. 29]
+                , j <- [0 .. 39]
                 ]
     30 @=? countMines
 
+assertIsJust :: HasCallStack => Maybe a -> IO a
+assertIsJust Nothing = assertFailure "Value should not be Nothing"
+assertIsJust (Just a) = return a
+
 unit_generateMineFieldHasUnopenedFields = do
-    let mineField = evalRand (generateMineField (123, 321) 7) gen
+    mineField <- assertIsJust $ evalRand (generateMineField (30, 41) 7) gen
     let allFieldsUnopened =
             all (\cell -> cellState cell == Unopened) (elems $ cells mineField)
     assertBool "Fields should be unopened in the beginning" allFieldsUnopened
@@ -51,8 +57,8 @@ unit_generateMineFieldHasDifferentResults = do
   where
     compareTwoBigFields :: (RandomGen g) => Rand g Bool
     compareTwoBigFields = do
-        mineField1 <- generateMineField (500, 500) 500
-        mineField2 <- generateMineField (500, 500) 500
+        mineField1 <- generateMineField (30, 30) 30
+        mineField2 <- generateMineField (30, 30) 30
         return $ mineField1 /= mineField2
 
 unit_openCellOneByOne = do
@@ -69,21 +75,21 @@ unit_openSeveralCells = do
     openResultMediumField3 @=? openCell mediumField3 (0, 0)
 
 unit_flagCell = do
-    Unopened @=? cellState (cells defaultField ! (2, 3))
-    let flaggedField = flagCell defaultField (2, 3)
-    Flagged @=? cellState (cells flaggedField ! (2, 3))
-    Unopened @=? cellState (cells flaggedField ! (2, 4))
+    Unopened @=? cellState (cells mediumField1 ! (0, 1))
+    let flaggedField = flagCell mediumField1 (0, 1)
+    Flagged @=? cellState (cells flaggedField ! (0, 1))
+    Unopened @=? cellState (cells flaggedField ! (1, 1))
 
 unit_openFlaggedCell = do
-    let flaggedField = flagCell defaultField (5, 5)
-    Flagged @=? cellState (cells flaggedField ! (5, 5))
-    let openedFlaggedField = openCell flaggedField (5, 5)
+    let flaggedField = flagCell mediumField1 (2, 2)
+    Flagged @=? cellState (cells flaggedField ! (2, 2))
+    let openedFlaggedField = openCell flaggedField (2, 2)
     flaggedField @=? openedFlaggedField
 
 unit_openOpenedCell = do
-    let openedField = openCell defaultField (5, 5)
-    Opened @=? cellState (cells openedField ! (5, 5))
-    let openOpenedField = openCell openedField (5, 5)
+    let openedField = openCell mediumField1 (2, 2)
+    Opened @=? cellState (cells openedField ! (2, 2))
+    let openOpenedField = openCell openedField (2, 2)
     openedField @=? openOpenedField
 
 unit_flagOpenedCell = do
@@ -123,10 +129,25 @@ unit_getGameState = do
     Running @=? getGameState runningField2
 
 unit_mineFieldJson = do
-    jsonSmallField2 @=? unpackChars (encode smallField2)
-    jsonOpenMineResultSmallField2 @=? unpackChars (encode openMineResultSmallField2)
+    assertJsonEqual jsonSmallField2 smallField2
+    assertJsonEqual jsonOpenMineResultSmallField2 openMineResultSmallField2
+  where
+    assertJsonEqual jsonString field = 
+        (decode (packChars jsonString) :: Maybe Value) @=? decode (encode field)
 
-defaultField = evalRand (generateMineField (10, 10) 10) gen
+unit_isIndexInRange = do
+    assertBool "(0, 0) is in range" $ isIndexInRange smallField1 (0, 0)
+    assertBool "(1, 1) is in range" $ isIndexInRange smallField1 (1, 1)
+    assertBool "(1, 2) is not in range" $ not (isIndexInRange smallField1 (1, 2))
+    assertBool "(-1, 0) is not in range" $ not (isIndexInRange smallField1 (-1, 0))
+
+unit_validGenerateMineFieldParameters = do
+    assertBool "(2, 3), 6 is ok" $ isJust $ evalRand (generateMineField (2, 3) 6) gen
+    assertBool "(2, 3), 0 is ok" $ isJust $ evalRand (generateMineField (2, 3) 0) gen
+    assertBool "(2, 3), 3 is ok" $ isJust $ evalRand (generateMineField (2, 3) 3) gen
+    assertBool "(2, 3), 7 has too many mines" $ isNothing $ evalRand (generateMineField (2, 3) 7) gen
+    assertBool "(-2, 3), 1 has a negative width" $ isNothing $ evalRand (generateMineField (-2, 3) 1) gen
+    assertBool "(1000, 1000), 7 is too big" $ isNothing $ evalRand (generateMineField (1000, 1000) 7) gen
 
 oneByOneField =
     MineField
@@ -196,7 +217,7 @@ smallField2 =
 
 cellLabelsSmallField2 = "UUFU"
 
-jsonSmallField2 = "{\"cellLabels\":[\"UU\",\"FU\"],\"gameState\":\"Running\"}"
+jsonSmallField2 = "{\"cellLabels\": [\"UU\",\"FU\"], \"gameState\": \"Running\", \"countMinesLeft\": 0}"
 
 -- 1🚩
 -- 1💥
@@ -212,7 +233,7 @@ openMineResultSmallField2 =
                   ]
         }
 
-jsonOpenMineResultSmallField2 = "{\"cellLabels\":[\"11\",\"FM\"],\"gameState\":\"Lost\"}"
+jsonOpenMineResultSmallField2 = "{\"gameState\": \"Lost\", \"cellLabels\": [\"11\",\"FM\"], \"countMinesLeft\": 0}"
 
 cellLabelsOpenMineResultSmallField2 = "11FM"
 
