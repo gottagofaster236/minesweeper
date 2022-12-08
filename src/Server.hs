@@ -1,71 +1,84 @@
-{-# LANGUAGE OverloadedStrings, GeneralizedNewtypeDeriving, ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings, GeneralizedNewtypeDeriving #-}
 
 module Server
     ( app
-    , runWebM
     ) where
 
-import MineField
 import Control.Concurrent.STM
+import Control.Monad.Random
 import Control.Monad.Reader
 import Data.Default.Class
+import qualified Data.Map as Map
 import Data.String
 import Data.Text.Lazy (Text)
+import MineField
+import Network.HTTP.Types
+import Network.Wai
 import Prelude ()
 import Prelude.Compat
 import Web.Scotty.Trans
-import qualified Data.Map as Map
-import Control.Monad.Random
-import Network.HTTP.Types
 
--- The server code is based on this example: https://github.com/scotty-web/scotty/blob/master/examples/globalstate.hs
-
-newtype AppState = AppState { games :: Map.Map String MineField }
+-- Global state management is based on this example: https://github.com/scotty-web/scotty/blob/master/examples/globalstate.hs
+newtype AppState =
+    AppState
+        { games :: Map.Map String MineField
+        }
 
 instance Default AppState where
     def = AppState Map.empty
 
-newtype WebM a = WebM { runWebM :: ReaderT (TVar AppState) IO a }
+newtype AppStateM a =
+    AppStateM
+        { runAppStateM :: ReaderT (TVar AppState) IO a
+        }
     deriving (Applicative, Functor, Monad, MonadIO, MonadReader (TVar AppState))
 
--- Scotty's monads are layered on top of our custom monad.
--- We define this synonym for lift in order to be explicit
--- about when we are operating at the 'WebM' layer.
-webM :: MonadTrans t => WebM a -> t WebM a
-webM = lift
+appStateM :: MonadTrans t => AppStateM a -> t AppStateM a
+appStateM = lift
 
--- Some helpers to make this feel more like a state monad.
-gets :: (AppState -> b) -> WebM b
-gets f = ask >>= liftIO . readTVarIO >>= return . f
+getState :: (AppState -> b) -> AppStateM b
+getState f = ask >>= liftIO . readTVarIO >>= return . f
 
-modify :: (AppState -> AppState) -> WebM ()
-modify f = ask >>= liftIO . atomically . flip modifyTVar' f
+modifyState :: (AppState -> AppState) -> AppStateM ()
+modifyState f = ask >>= liftIO . atomically . flip modifyTVar' f
 
-app :: ScottyT Text WebM ()
+app :: IO Application
 app = do
-    defaultHandler $ \s -> do
+    appState <- newTVarIO def
+    let runActionToIO m = runReaderT (runAppStateM m) appState
+    scottyAppT runActionToIO appWithState
+
+appWithState :: ScottyT Text AppStateM ()
+appWithState = do
+    defaultHandler $ \errorText -> do
         status status400
-        text s
-
+        text errorText
+    get "/" $ file "./static/index.html"
+    get "/:gameId" $ file "./static/index.html"
     post "/newGame" $ do
-        fieldWidth :: Int <- param "fieldWidth"
-        fieldHeight :: Int <- param "fieldHeight"
-        minesCount :: Int <- param "minesCount"
+        fieldWidth <- param "fieldWidth"
+        fieldHeight <- param "fieldHeight"
+        minesCount <- param "minesCount"
         newGameRequest fieldWidth fieldHeight minesCount
-    
-    get "/game/:gameId" $ do
+    get "/:gameId/field" $ do
         gameId <- param "gameId"
-        game <- gameById gameId
-        json game
+        field <- fieldByGameId gameId
+        json field
+    post "/:gameId/openCell" (cellActionRequest openCell)
+    post "/:gameId/flagCell" (cellActionRequest flagCell)
 
-newGameRequest :: Int -> Int -> Int -> ActionT Text WebM ()
+newGameRequest :: Int -> Int -> Int -> ActionT Text AppStateM ()
 newGameRequest fieldWidth fieldHeight minesCount = do
     gameId <- liftIO $ evalRandIO randomGameId
-    mineFieldMaybe <- liftIO $ evalRandIO $ generateMineField (fieldWidth, fieldHeight) minesCount
+    mineFieldMaybe <-
+        liftIO $
+        evalRandIO $ generateMineField (fieldWidth, fieldHeight) minesCount
     case mineFieldMaybe of
         Just mineField -> do
-            webM $ modify $ \st -> do
-                st { games = Map.insert gameId mineField (games st) }
+            appStateM $
+                modifyState $ \state -> do
+                    let newGames = Map.insert gameId mineField (games state)
+                    state {games = newGames}
             json $ Map.singleton ("gameId" :: String) gameId
         Nothing -> raise $ stringError "Invalid width, height, or mine count"
 
@@ -75,13 +88,31 @@ randomGameId = do
   where
     randomChar :: (RandomGen g) => Rand g Char
     randomChar = do
-        let possibleChars = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9']
+        let possibleChars = ['a' .. 'z'] ++ ['A' .. 'Z'] ++ ['0' .. '9']
         charIndex <- getRandomR (0, length possibleChars - 1)
         return $ possibleChars !! charIndex
 
-gameById :: String -> ActionT Text WebM MineField
-gameById gameId = do
-    storedGames <- webM $ gets games
+fieldByGameId :: String -> ActionT Text AppStateM MineField
+fieldByGameId gameId = do
+    storedGames <- appStateM $ getState games
     case Map.lookup gameId storedGames of
         Nothing -> raise $ stringError "Invalid gameId"
-        Just game -> return game
+        Just field -> return field
+
+cellActionRequest ::
+       (MineField -> (Int, Int) -> MineField) -> ActionT Text AppStateM ()
+cellActionRequest action = do
+    x <- param "x"
+    y <- param "y"
+    gameId <- param "gameId"
+    field <- fieldByGameId gameId
+    if not (isPositionInRange field (x, y))
+        then raise $ stringError "Invalid x or y"
+    else if getGameState field /= Running
+        then raise $ stringError "Game is finished already"
+    else do
+        let newField = action field (x, y)
+        appStateM $
+            modifyState $ \state -> do
+                let newGames = Map.insert gameId newField (games state)
+                state {games = newGames}

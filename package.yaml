@@ -36,6 +36,7 @@ dependencies:
 - data-default-class
 - text
 - base-compat-batteries
+- wai-extra
 
 ghc-options:
 - -Wall
@@ -71,11 +72,10 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - hedgehog
     - HUnit
     - HUnit-approx
     - tasty
-    - tasty-hedgehog
     - tasty-hunit
+    - tasty-hspec
     - tasty-discover
     - minesweeper

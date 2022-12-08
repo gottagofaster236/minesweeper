@@ -14,7 +14,7 @@ module MineField
     , flagCell
     , countMinesLeft
     , getGameState
-    , isIndexInRange
+    , isPositionInRange
     ) where
 
 import Control.Monad.Random
@@ -75,8 +75,8 @@ width field = 1 + fst (snd $ bounds $ cells field)
 height :: MineField -> Int
 height field = 1 + snd (snd $ bounds $ cells field)
 
-isIndexInRange :: MineField -> (Int, Int) -> Bool
-isIndexInRange field = inRange (bounds (cells field))
+isPositionInRange :: MineField -> (Int, Int) -> Bool
+isPositionInRange field = inRange (bounds (cells field))
 
 cellNumber :: MineField -> (Int, Int) -> Int
 cellNumber field (x, y) =
@@ -94,7 +94,7 @@ cellNumber field (x, y) =
   where
     safeIsMine :: (Int, Int) -> Bool
     safeIsMine position
-        | isIndexInRange field position = isMine $ cells field ! position
+        | isPositionInRange field position = isMine $ cells field ! position
     safeIsMine _ = False
 
 cellLabel :: MineField -> (Int, Int) -> Char
@@ -135,7 +135,7 @@ openCell field position = do
   where
     findPositionsToOpen :: (Int, Int) -> State (Set.Set (Int, Int)) ()
     findPositionsToOpen currentPosition
-        | not (isIndexInRange field currentPosition) = return ()
+        | not (isPositionInRange field currentPosition) = return ()
     findPositionsToOpen currentPosition
         | cellState (cells field ! currentPosition) /= Unopened = return ()
     findPositionsToOpen (x, y) = do

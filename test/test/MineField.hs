@@ -135,11 +135,11 @@ unit_mineFieldJson = do
     assertJsonEqual jsonString field = 
         (decode (packChars jsonString) :: Maybe Value) @=? decode (encode field)
 
-unit_isIndexInRange = do
-    assertBool "(0, 0) is in range" $ isIndexInRange smallField1 (0, 0)
-    assertBool "(1, 1) is in range" $ isIndexInRange smallField1 (1, 1)
-    assertBool "(1, 2) is not in range" $ not (isIndexInRange smallField1 (1, 2))
-    assertBool "(-1, 0) is not in range" $ not (isIndexInRange smallField1 (-1, 0))
+unit_isPositionInRange = do
+    assertBool "(0, 0) is in range" $ isPositionInRange smallField1 (0, 0)
+    assertBool "(1, 1) is in range" $ isPositionInRange smallField1 (1, 1)
+    assertBool "(1, 2) is not in range" $ not (isPositionInRange smallField1 (1, 2))
+    assertBool "(-1, 0) is not in range" $ not (isPositionInRange smallField1 (-1, 0))
 
 unit_validGenerateMineFieldParameters = do
     assertBool "(2, 3), 6 is ok" $ isJust $ evalRand (generateMineField (2, 3) 6) gen
