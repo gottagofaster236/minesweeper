@@ -14,6 +14,14 @@ import Data.Maybe
 
 gen = mkStdGen 0
 
+assertIsJust :: HasCallStack => Maybe a -> IO a
+assertIsJust Nothing = assertFailure "Value should not be Nothing"
+assertIsJust (Just a) = return a
+
+generateMineFieldWithGen :: (Int, Int) -> Int -> Maybe MineField
+generateMineFieldWithGen size minesCount =
+    evalRand (generateMineField size minesCount) gen
+
 unit_cellNumbers = do
     cellNumbersMediumField2 @=?
         map (cellNumber mediumField2) (indices $ cells mediumField2)
@@ -25,9 +33,8 @@ unit_cellLabels = do
   where
     cellLabels field = map (cellLabel field) (indices $ cells field)
 
-unit_generateMineFieldHasCorrectMinesCount :: IO ()
 unit_generateMineFieldHasCorrectMinesCount = do
-    mineField <- assertIsJust $ evalRand (generateMineField (30, 40) 30) gen
+    mineField <- assertIsJust $ generateMineFieldWithGen (30, 40) 30
     let mineCells = cells mineField
     ((0, 0), (29, 39)) @=? bounds mineCells
     30 @=? width mineField
@@ -40,12 +47,8 @@ unit_generateMineFieldHasCorrectMinesCount = do
                 ]
     30 @=? countMines
 
-assertIsJust :: HasCallStack => Maybe a -> IO a
-assertIsJust Nothing = assertFailure "Value should not be Nothing"
-assertIsJust (Just a) = return a
-
 unit_generateMineFieldHasUnopenedFields = do
-    mineField <- assertIsJust $ evalRand (generateMineField (30, 41) 7) gen
+    mineField <- assertIsJust $ generateMineFieldWithGen (30, 41) 7
     let allFieldsUnopened =
             all (\cell -> cellState cell == Unopened) (elems $ cells mineField)
     assertBool "Fields should be unopened in the beginning" allFieldsUnopened
@@ -142,12 +145,12 @@ unit_isPositionInRange = do
     assertBool "(-1, 0) is not in range" $ not (isPositionInRange smallField1 (-1, 0))
 
 unit_validGenerateMineFieldParameters = do
-    assertBool "(2, 3), 6 is ok" $ isJust $ evalRand (generateMineField (2, 3) 6) gen
-    assertBool "(2, 3), 0 is ok" $ isJust $ evalRand (generateMineField (2, 3) 0) gen
-    assertBool "(2, 3), 3 is ok" $ isJust $ evalRand (generateMineField (2, 3) 3) gen
-    assertBool "(2, 3), 7 has too many mines" $ isNothing $ evalRand (generateMineField (2, 3) 7) gen
-    assertBool "(-2, 3), 1 has a negative width" $ isNothing $ evalRand (generateMineField (-2, 3) 1) gen
-    assertBool "(1000, 1000), 7 is too big" $ isNothing $ evalRand (generateMineField (1000, 1000) 7) gen
+    assertBool "(2, 3), 6 is ok" $ isJust $ generateMineFieldWithGen (2, 3) 6
+    assertBool "(2, 3), 0 is ok" $ isJust $ generateMineFieldWithGen (2, 3) 0
+    assertBool "(2, 3), 3 is ok" $ isJust $ generateMineFieldWithGen (2, 3) 3
+    assertBool "(2, 3), 7 has too many mines" $ isNothing $ generateMineFieldWithGen (2, 3) 7
+    assertBool "(-2, 3), 1 has a negative width" $ isNothing $ generateMineFieldWithGen (-2, 3) 1
+    assertBool "(1000, 1000), 7 is too big" $ isNothing $ generateMineFieldWithGen (1000, 1000) 7
 
 oneByOneField =
     MineField

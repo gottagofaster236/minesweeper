@@ -35,6 +35,8 @@ library
   build-depends:
       MonadRandom
     , aeson
+    , aeson-match-qq
+    , aeson-qq
     , array
     , base >=4.7 && <5
     , base-compat-batteries
@@ -47,6 +49,7 @@ library
     , scotty
     , stm
     , text
+    , unordered-containers
     , wai
     , wai-extra
     , warp
@@ -62,6 +65,8 @@ executable minesweeper-exe
   build-depends:
       MonadRandom
     , aeson
+    , aeson-match-qq
+    , aeson-qq
     , array
     , base >=4.7 && <5
     , base-compat-batteries
@@ -75,6 +80,7 @@ executable minesweeper-exe
     , scotty
     , stm
     , text
+    , unordered-containers
     , wai
     , wai-extra
     , warp
@@ -95,6 +101,8 @@ test-suite minesweeper-test
     , HUnit-approx
     , MonadRandom
     , aeson
+    , aeson-match-qq
+    , aeson-qq
     , array
     , base >=4.7 && <5
     , base-compat-batteries
@@ -109,9 +117,9 @@ test-suite minesweeper-test
     , stm
     , tasty
     , tasty-discover
-    , tasty-hspec
     , tasty-hunit
     , text
+    , unordered-containers
     , wai
     , wai-extra
     , warp

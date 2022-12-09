@@ -142,13 +142,13 @@ openCell field position = do
         visitedPositions <- get
         if Set.member (x, y) visitedPositions
             then return ()
-            else do
-                put $ Set.insert (x, y) visitedPositions
-                when (cellNumber field (x, y) == 0) $ do
-                    findPositionsToOpen (x - 1, y)
-                    findPositionsToOpen (x + 1, y)
-                    findPositionsToOpen (x, y - 1)
-                    findPositionsToOpen (x, y + 1)
+        else do
+            put $ Set.insert (x, y) visitedPositions
+            when (cellNumber field (x, y) == 0) $ do
+                findPositionsToOpen (x - 1, y)
+                findPositionsToOpen (x + 1, y)
+                findPositionsToOpen (x, y - 1)
+                findPositionsToOpen (x, y + 1)
 
 flagCell :: MineField -> (Int, Int) -> MineField
 flagCell field position = do

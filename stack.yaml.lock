@@ -3,7 +3,14 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: aeson-match-qq-1.6.1@sha256:b96937efca5e70c789269824651ef4a8ce9db3113050a1b544b38153922eb02b,1651
+    pantry-tree:
+      sha256: 224240959f60afd88f5af704372b60f268c56a462900b6dbd550286acc11430e
+      size: 640
+  original:
+    hackage: aeson-match-qq-1.6.1@sha256:b96937efca5e70c789269824651ef4a8ce9db3113050a1b544b38153922eb02b,1651
 snapshots:
 - completed:
     sha256: e8cdd1d4ff5aaa42bc15ba641a506cbee4cf2073758c51acec800728e42c0aa4

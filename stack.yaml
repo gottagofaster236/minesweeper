@@ -2,3 +2,5 @@ packages:
 - .
 resolver:
   nightly-2022-11-04
+extra-deps:
+- aeson-match-qq-1.6.1@sha256:b96937efca5e70c789269824651ef4a8ce9db3113050a1b544b38153922eb02b,1651

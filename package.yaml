@@ -31,12 +31,15 @@ dependencies:
 - bytestring
 - warp
 - aeson
+- aeson-qq
+- aeson-match-qq
 - scotty
 - stm
 - data-default-class
 - text
 - base-compat-batteries
 - wai-extra
+- unordered-containers
 
 ghc-options:
 - -Wall
@@ -76,6 +79,5 @@ tests:
     - HUnit-approx
     - tasty
     - tasty-hunit
-    - tasty-hspec
     - tasty-discover
     - minesweeper
