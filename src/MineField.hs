@@ -149,6 +149,10 @@ openCell field position = do
                 findPositionsToOpen (x + 1, y)
                 findPositionsToOpen (x, y - 1)
                 findPositionsToOpen (x, y + 1)
+                findPositionsToOpen (x - 1, y - 1)
+                findPositionsToOpen (x - 1, y + 1)
+                findPositionsToOpen (x + 1, y - 1)
+                findPositionsToOpen (x + 1, y + 1)
 
 flagCell :: MineField -> (Int, Int) -> MineField
 flagCell field position = do

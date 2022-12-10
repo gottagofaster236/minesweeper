@@ -76,6 +76,7 @@ unit_openSeveralCells = do
     openResultMediumField1 @=? openCell mediumField1 (2, 2)
     openResultMediumField2 @=? openCell mediumField2 (0, 1)
     openResultMediumField3 @=? openCell mediumField3 (0, 0)
+    openResultMediumField4 @=? openCell mediumField4 (0, 0)
 
 unit_flagCell = do
     Unopened @=? cellState (cells mediumField1 ! (0, 1))
@@ -289,8 +290,8 @@ openResultMediumField2 =
 cellNumbersMediumField2 = [0, 0, 0, 1, 1, 1, 1, 0, 1]
 
 -- ▢▢🚩
--- ▢🚩▢
--- 🚩▢▢
+-- ▢🚩🚩
+-- 🚩🚩▢
 mediumField3 =
     MineField
         { cells =
@@ -298,12 +299,14 @@ mediumField3 =
               [ ((2, 0), Cell {cellState = Flagged, isMine = False})
               , ((1, 1), Cell {cellState = Flagged, isMine = False})
               , ((0, 2), Cell {cellState = Flagged, isMine = False})
+              , ((1, 2), Cell {cellState = Flagged, isMine = False})
+              , ((2, 1), Cell {cellState = Flagged, isMine = False})
               ]
         }
 
 -- __🚩
--- _🚩▢
--- 🚩▢▢
+-- _🚩🚩
+-- 🚩🚩▢
 openResultMediumField3 =
     MineField
         { cells =
@@ -313,6 +316,33 @@ openResultMediumField3 =
               , ((0, 1), Cell {cellState = Opened, isMine = False})
               ]
         }
+
+-- ▢▢▢
+-- ▢▢💣
+-- ▢💣▢
+mediumField4 =
+    MineField
+        { cells =
+              cells mediumField1 //
+              [ ((2, 1), Cell {cellState = Unopened, isMine = True})
+              , ((1, 2), Cell {cellState = Unopened, isMine = True})
+              ]
+        }
+
+-- _1▢
+-- 12💣
+-- ▢💣▢
+openResultMediumField4 =
+    MineField
+        { cells =
+              cells mediumField4 //
+              [ ((0, 0), Cell {cellState = Opened, isMine = False})
+              , ((0, 1), Cell {cellState = Opened, isMine = False})
+              , ((1, 0), Cell {cellState = Opened, isMine = False})
+              , ((1, 1), Cell {cellState = Opened, isMine = False})
+              ]
+        }
+
 
 -- 11
 -- 1💣
