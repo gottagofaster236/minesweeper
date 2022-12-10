@@ -5,7 +5,6 @@
     <title>Minesweeper in Haskell</title>
 </head>
 <body>
-    <!-- Centering was copied from here: https://stackoverflow.com/a/6182661/6120487 -->
     <div class="outer">
         <div class="middle">
             <h1>Minesweeper in Haskell</h1>
@@ -48,15 +47,16 @@
                 }
                 const data = JSON.parse(this.response);
                 const gameId = data["gameId"];
-                window.history.pushState("", "", "/" + gameId);
+                window.history.pushState("", "", "/game/" + gameId);
                 updateField();
             };
+            xhr.onerror = onConnectionLost;
             xhr.send();
         }
 
         function updateField() {
             if (!isGameRunning()) {
-                resetText();
+                setTextToNoGameRunning();
                 return;
             }
 
@@ -65,7 +65,7 @@
             xhr.onload = function () {
                 if (xhr.status != 200) {
                     alert(this.response);
-                    resetText();
+                    setTextToNoGameRunning();
                     return;   
                 }
                 const data = JSON.parse(this.response);
@@ -73,16 +73,21 @@
                 document.getElementById("countMinesLeft").innerHTML = "Count mines left: " + data["countMinesLeft"];
                 document.getElementById("mineField").innerHTML = getFieldHtml(data["cellLabels"]);
             };
+            xhr.onerror = onConnectionLost;
             xhr.send();
         }
 
         function isGameRunning() {
-            return window.location.pathname.length > 1;
+            return window.location.pathname.startsWith("/game/");
         }
 
-        function resetText() {
+        function setTextToNoGameRunning() {
             document.getElementById("gameState").innerHTML = "No game running, click \"New game\" to create one.";
             document.getElementById("countMinesLeft").innerHTML = "";
+        }
+
+        function onConnectionLost() {
+            alert("No connection to server!");
         }
 
         function getFieldHtml(cellLabels) {
@@ -120,9 +125,9 @@
             if (cell == "U") {
                 return "";
             } else if (cell == "F") {
-                return "&#128681;";
+                return "&#128681;";  // Flag emoji.
             } else if (cell == "M") {
-                return "&#128163;";
+                return "&#128163;";  // Mine emoji.
             } else if (cell == "0") {
                 return "";
             } else {
@@ -152,6 +157,7 @@
                 }
                 updateField();
             };
+            xhr.onerror = onConnectionLost;
             xhr.send();
         }
 

@@ -49,8 +49,17 @@ assertIsRight (Right b) = return b
 
 json :: T.HasCallStack => SResponse -> Session Aeson.Value
 json response = do
-    responseJson <- assertIsJust $ Aeson.decode $ simpleBody response
-    return responseJson
+    assertIsJust $ Aeson.decode $ simpleBody response
+
+unit_webpage = serverTest $ do
+    responseIndex <- get "/"
+    assertStatus 200 responseIndex
+    assertBodyContains "Minesweeper" responseIndex
+    
+    gameId <- newGameId (5, 5) 5
+    responseGame <- get $ BS.pack $ "/game/" ++ gameId
+    assertStatus 200 responseGame
+    assertBodyContains "Minesweeper" responseGame
 
 unit_newGame = serverTest $ do
     gameId <- newGameId (5, 5) 5
@@ -82,20 +91,20 @@ newGameId (fieldWidth, fieldHeight) minesCount = do
 
 unit_field = serverTest $ do
     gameId <- newGameId (1, 1) 0
-    response <- get $ BS.pack $ "/" ++ gameId ++ "/field"
+    response <- get $ BS.pack $ "/game/" ++ gameId ++ "/field"
     assertStatus 200 response
     responseJson <- json response
     let expected = [aesonQQ| {"gameState": "Running", "cellLabels": ["U"], "countMinesLeft": 0} |]
     expected @=? responseJson
 
 unit_fieldErrors = serverTest $ do
-    response <- get "/invalidGameId/field"
+    response <- get "game/invalidGameId/field"
     assertStatus 400 response
     assertBody "Invalid gameId" response
 
 assertFieldMatches :: T.HasCallStack => Matcher Aeson.Value -> String -> Session ()
 assertFieldMatches matcher gameId = do
-    response <- get $ BS.pack $ "/" ++ gameId ++ "/field"
+    response <- get $ BS.pack $ "/game/" ++ gameId ++ "/field"
     assertStatus 200 response
     responseJson <- json response
     _ <- assertIsRight $ match matcher responseJson
@@ -104,7 +113,7 @@ assertFieldMatches matcher gameId = do
 unit_openCell = serverTest $ do
     gameId <- newGameId (1, 1) 0
     assertFieldMatches [qq| {"cellLabels": ["U"], ...} |] gameId
-    responseOpenCell <- post $ BS.pack $ "/" ++ gameId ++ "/openCell?x=0&y=0"
+    responseOpenCell <- post $ BS.pack $ "/game/" ++ gameId ++ "/openCell?x=0&y=0"
     assertStatus 200 responseOpenCell
     assertFieldMatches [qq| {"cellLabels": ["0"], ...} |] gameId
 
@@ -113,7 +122,7 @@ unit_openCellErrors = testCellActionErrors "/openCell"
 unit_flagCell = serverTest $ do
     gameId <- newGameId (1, 1) 0
     assertFieldMatches [qq| {"cellLabels": ["U"], ...} |] gameId
-    responseOpenCell <- post $ BS.pack $ "/" ++ gameId ++ "/flagCell?x=0&y=0"
+    responseOpenCell <- post $ BS.pack $ "/game/" ++ gameId ++ "/flagCell?x=0&y=0"
     assertStatus 200 responseOpenCell
     assertFieldMatches [qq| {"cellLabels": ["F"], ...} |] gameId
 
@@ -121,12 +130,12 @@ unit_flagCellErrors = testCellActionErrors "/flagCell"
 
 testCellActionErrors action = serverTest $ do
     gameId <- newGameId (1, 1) 0
-    responseOutOfBounds <- post $ BS.pack $ "/" ++ gameId ++ action ++ "?x=3&y=2"
+    responseOutOfBounds <- post $ BS.pack $ "/game/" ++ gameId ++ action ++ "?x=3&y=2"
     assertStatus 400 responseOutOfBounds
     assertBody "Invalid x or y" responseOutOfBounds
     
     -- If a 1x1 field has one mine, the game is already won before the first move.
     finishedGameId <- newGameId (1, 1) 1
-    responseFinished <- post $ BS.pack $ "/" ++ finishedGameId ++ action ++ "?x=0&y=0"
+    responseFinished <- post $ BS.pack $ "/game/" ++ finishedGameId ++ action ++ "?x=0&y=0"
     assertStatus 400 responseFinished
     assertBody "Game is finished already" responseFinished

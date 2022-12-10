@@ -50,12 +50,14 @@ data GameState
     | Lost
     deriving (Show, Eq)
 
--- Takes in the size (w, h) of the field and the number of mines.
 generateMineField :: (RandomGen g) => (Int, Int) -> Int -> Rand g (Maybe MineField)
-
 generateMineField (fieldWidth, fieldHeight) minesCount
-    | fieldWidth <= 0 || fieldHeight <= 0 || fieldWidth > 50 || fieldHeight > 50
-        || minesCount < 0 || minesCount > fieldWidth * fieldHeight = return Nothing
+    | fieldWidth <= 0 ||
+          fieldHeight <= 0 ||
+          fieldWidth > 50 ||
+          fieldHeight > 50 ||
+          minesCount < 0 || minesCount > fieldWidth * fieldHeight =
+        return Nothing
 generateMineField (fieldWidth, fieldHeight) minesCount = do
     let isMineUnshuffled =
             replicate minesCount True ++
@@ -80,22 +82,24 @@ isPositionInRange field = inRange (bounds (cells field))
 
 cellNumber :: MineField -> (Int, Int) -> Int
 cellNumber field (x, y) =
-    sum $
-    map (fromEnum . safeIsMine)
-        [ (x - 1, y)
-        , (x + 1, y)
-        , (x, y - 1)
-        , (x, y + 1)
-        , (x - 1, y - 1)
-        , (x - 1, y + 1)
-        , (x + 1, y - 1)
-        , (x + 1, y + 1)
-        ]
+    sum $ map (fromEnum . safeIsMine) $ adjacentCells (x, y)
   where
     safeIsMine :: (Int, Int) -> Bool
     safeIsMine position
         | isPositionInRange field position = isMine $ cells field ! position
     safeIsMine _ = False
+
+adjacentCells :: (Int, Int) -> [(Int, Int)]
+adjacentCells (x, y) = 
+    [ (x - 1, y)
+    , (x + 1, y)
+    , (x, y - 1)
+    , (x, y + 1)
+    , (x - 1, y - 1)
+    , (x - 1, y + 1)
+    , (x + 1, y - 1)
+    , (x + 1, y + 1)
+    ]
 
 cellLabel :: MineField -> (Int, Int) -> Char
 cellLabel field position = do
@@ -144,15 +148,8 @@ openCell field position = do
             then return ()
         else do
             put $ Set.insert (x, y) visitedPositions
-            when (cellNumber field (x, y) == 0) $ do
-                findPositionsToOpen (x - 1, y)
-                findPositionsToOpen (x + 1, y)
-                findPositionsToOpen (x, y - 1)
-                findPositionsToOpen (x, y + 1)
-                findPositionsToOpen (x - 1, y - 1)
-                findPositionsToOpen (x - 1, y + 1)
-                findPositionsToOpen (x + 1, y - 1)
-                findPositionsToOpen (x + 1, y + 1)
+            when (cellNumber field (x, y) == 0) $
+                mapM_ findPositionsToOpen (adjacentCells (x, y))
 
 flagCell :: MineField -> (Int, Int) -> MineField
 flagCell field position = do

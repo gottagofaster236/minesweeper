@@ -46,26 +46,26 @@ app :: IO Application
 app = do
     appState <- newTVarIO def
     let runActionToIO m = runReaderT (runAppStateM m) appState
-    scottyAppT runActionToIO appWithState
+    scottyAppT runActionToIO appWithoutState
 
-appWithState :: ScottyT Text AppStateM ()
-appWithState = do
+appWithoutState :: ScottyT Text AppStateM ()
+appWithoutState = do
     defaultHandler $ \errorText -> do
         status status400
         text errorText
-    get "/" $ file "./static/index.html"
-    get "/:gameId" $ file "./static/index.html"
+    get "/" $ file "./static/game.html"
+    get "/game/:gameId" $ file "./static/game.html"
     post "/newGame" $ do
         fieldWidth <- param "fieldWidth"
         fieldHeight <- param "fieldHeight"
         minesCount <- param "minesCount"
         newGameRequest fieldWidth fieldHeight minesCount
-    get "/:gameId/field" $ do
+    get "/game/:gameId/field" $ do
         gameId <- param "gameId"
         field <- fieldByGameId gameId
         json field
-    post "/:gameId/openCell" (cellActionRequest openCell)
-    post "/:gameId/flagCell" (cellActionRequest flagCell)
+    post "/game/:gameId/openCell" (cellActionRequest openCell)
+    post "/game/:gameId/flagCell" (cellActionRequest flagCell)
 
 newGameRequest :: Int -> Int -> Int -> ActionT Text AppStateM ()
 newGameRequest fieldWidth fieldHeight minesCount = do
