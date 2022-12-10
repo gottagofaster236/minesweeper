@@ -38,7 +38,7 @@
             params.append("fieldHeight", document.getElementById("fieldHeight").value);
             params.append("minesCount", document.getElementById("minesCount").value);
 
-            var xhr = new XMLHttpRequest();
+            const xhr = new XMLHttpRequest();
             xhr.open("POST", `/newGame?${params}`, true);
             xhr.onload = function () {
                 if (xhr.status != 200) {
@@ -60,7 +60,7 @@
                 return;
             }
 
-            var xhr = new XMLHttpRequest();
+            const xhr = new XMLHttpRequest();
             xhr.open("GET", window.location.pathname + "/field", true);
             xhr.onload = function () {
                 if (xhr.status != 200) {
@@ -148,7 +148,7 @@
             params.append("x", x);
             params.append("y", y);
 
-            var xhr = new XMLHttpRequest();
+            const xhr = new XMLHttpRequest();
             xhr.open("POST", `${window.location.pathname}/${action}?${params}`, true);
             xhr.onload = function () {
                 if (xhr.status != 200) {

@@ -126,7 +126,6 @@ openCell field position
     openCellIfNotOpened cell = cell
 -- We opened an ordinary cell.
 openCell field position = do
-    let fieldCells = cells field
     let positionsToOpen =
             Set.toList (execState (findPositionsToOpen position) Set.empty)
     let modifiedPositionsAndCells =
@@ -135,7 +134,7 @@ openCell field position = do
                      ( modifiedPosition
                      , (cells field ! modifiedPosition) {cellState = Opened}))
                 positionsToOpen
-    field {cells = fieldCells // modifiedPositionsAndCells}
+    field {cells = cells field // modifiedPositionsAndCells}
   where
     findPositionsToOpen :: (Int, Int) -> State (Set.Set (Int, Int)) ()
     findPositionsToOpen currentPosition
@@ -153,14 +152,13 @@ openCell field position = do
 
 flagCell :: MineField -> (Int, Int) -> MineField
 flagCell field position = do
-    let fieldCells = cells field
-    let oldCell = fieldCells ! position
+    let oldCell = cells field ! position
     let newState =
             case cellState oldCell of
                 Unopened -> Flagged
                 Flagged -> Unopened
                 Opened -> Opened
-    let newCells = fieldCells // [(position, oldCell {cellState = newState})]
+    let newCells = cells field // [(position, oldCell {cellState = newState})]
     field {cells = newCells}
 
 countMinesLeft :: MineField -> Int
