@@ -54,7 +54,7 @@ data GameState
 generateMineField :: (RandomGen g) => (Int, Int) -> Int -> Rand g (Maybe MineField)
 
 generateMineField (fieldWidth, fieldHeight) minesCount
-    | fieldWidth <= 0 || fieldHeight <= 0 || fieldWidth > 50 || fieldWidth > 50
+    | fieldWidth <= 0 || fieldHeight <= 0 || fieldWidth > 50 || fieldHeight > 50
         || minesCount < 0 || minesCount > fieldWidth * fieldHeight = return Nothing
 generateMineField (fieldWidth, fieldHeight) minesCount = do
     let isMineUnshuffled =

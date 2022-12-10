@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Minesweeper in Haskell</title>
+</head>
+<body>
+    <!-- Centering was copied from here: https://stackoverflow.com/a/6182661/6120487 -->
+    <div class="outer">
+        <div class="middle">
+            <h1>Minesweeper in Haskell</h1>
+            
+            <form action="javascript:newGame()" class="window inner">
+                <label for="fieldWidth">Field width:</label>
+                <input type="number" id="fieldWidth" name="fieldWidth" value="9" required>
+                <label for="fieldHeight">Field height:</label>
+                <input type="number" id="fieldHeight" name="fieldHeight" value="9" required>
+                <label for="minesCount">Number of mines:</label>
+                <input type="number" id="minesCount" name="minesCount" value="10" required >
+                <input type="submit" value="New game"
+                    style="padding-left: 10px; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
+            </form>
+
+            <div class="window inner">
+                <p id="gameState"></p>
+                <p id="countMinesLeft"></p>
+            </div>
+
+            <table id="mineField" class="inner"></table>
+        </div>
+    </div>
+
+    <script>
+        updateField();
+
+        function newGame() {
+            const params = new URLSearchParams();
+            params.append("fieldWidth", document.getElementById("fieldWidth").value);
+            params.append("fieldHeight", document.getElementById("fieldHeight").value);
+            params.append("minesCount", document.getElementById("minesCount").value);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", `/newGame?${params}`, true);
+            xhr.onload = function () {
+                if (xhr.status != 200) {
+                    alert(this.response);
+                    return;   
+                }
+                const data = JSON.parse(this.response);
+                const gameId = data["gameId"];
+                window.history.pushState("", "", "/" + gameId);
+                updateField();
+            };
+            xhr.send();
+        }
+
+        function updateField() {
+            if (!isGameRunning()) {
+                resetText();
+                return;
+            }
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", window.location.pathname + "/field", true);
+            xhr.onload = function () {
+                if (xhr.status != 200) {
+                    alert(this.response);
+                    resetText();
+                    return;   
+                }
+                const data = JSON.parse(this.response);
+                document.getElementById("gameState").innerHTML = "Game state: " + data["gameState"];
+                document.getElementById("countMinesLeft").innerHTML = "Count mines left: " + data["countMinesLeft"];
+                document.getElementById("mineField").innerHTML = getFieldHtml(data["cellLabels"]);
+            };
+            xhr.send();
+        }
+
+        function isGameRunning() {
+            return window.location.pathname.length > 1;
+        }
+
+        function resetText() {
+            document.getElementById("gameState").innerHTML = "No game running, click \"New game\" to create one.";
+            document.getElementById("countMinesLeft").innerHTML = "";
+        }
+
+        function getFieldHtml(cellLabels) {
+            const width = cellLabels.length;
+            const height = cellLabels[0].length;
+            let result = ""
+            for (let y = 0; y < height; y++) {
+                result += "<tr>";
+                for (let x = 0; x < width; x++) {
+                    result += getCellHtml(cellLabels[x][y], x, y);
+                }
+                result += "</tr>";
+            }
+            return result;
+        }
+
+        function getCellHtml(cell, x, y) {
+            return `<td class="${getCellTdClass(cell)}" `
+                + `onclick="openCell(${x}, ${y})" `
+                + `oncontextmenu="flagCell(${x}, ${y}); return false;">`
+                + getCellTdContent(cell) + "</td>"
+        }
+
+        function getCellTdClass(cell) {
+            if (cell == "U" || cell == "F") {
+                return "unopened";
+            } else if (cell == "M" || cell == "0") {
+                return "opened";
+            } else {
+                return "opened number" + cell;
+            }
+        }
+
+        function getCellTdContent(cell) {
+            if (cell == "U") {
+                return "";
+            } else if (cell == "F") {
+                return "&#128681;";
+            } else if (cell == "M") {
+                return "&#128163;";
+            } else if (cell == "0") {
+                return "";
+            } else {
+                return cell;
+            }
+        }
+
+        function openCell(x, y) {
+            cellAction(x, y, "openCell");
+        }
+
+        function flagCell(x, y) {
+            cellAction(x, y, "flagCell");
+        }
+
+        function cellAction(x, y, action) {
+            const params = new URLSearchParams();
+            params.append("x", x);
+            params.append("y", y);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", `${window.location.pathname}/${action}?${params}`, true);
+            xhr.onload = function () {
+                if (xhr.status != 200) {
+                    alert(this.response);
+                    return;
+                }
+                updateField();
+            };
+            xhr.send();
+        }
+
+    </script>
+
+    <style>
+        .outer {
+            display: table;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        .middle {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .inner {
+            margin-left: auto;
+            margin-right: auto;
+            width: fit-content;
+        }
+
+        html * {
+            color: #000;
+            font-family: Arial;
+            text-align: center;
+        }
+
+        p {
+            margin: 5px;
+        }
+
+        table { 
+            border-spacing: 0;
+            border-collapse: collapse;
+        }
+        
+        td {
+            width: 35px;
+            height: 35px;
+            font-size: 25px;
+            
+            border: 3px solid rgb(121, 121, 121);
+            padding: 3px;
+            font-weight: bold;
+            text-align: center;
+            vertical-align: middle; 
+        }
+
+        input {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+
+        .window {
+            padding: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border: 3px solid rgb(121, 121, 121);
+            width: fit-content;
+        }
+
+        .unopened {
+            background-color: rgb(175, 175, 175);
+        }
+        .opened {
+            background-color: rgb(237, 237, 237);
+        }
+        .number1 {
+            color: rgb(1, 0, 241)
+        }
+        .number2 {
+            color: rgb(1, 121, 1)
+        }
+        .number3 {
+            color: rgb(241, 0, 0)
+        }
+        .number4 {
+            color: rgb(1, 0, 121)
+        }
+        .number5 {
+            color: rgb(122, 1, 2)
+        }
+        .number6 {
+            color: rgb(0, 121, 122)
+        }
+        .number7 {
+            color: rgb(0, 0, 0)
+        }
+        .number8 {
+            color: rgb(121, 121, 121)
+        }
+    </style>
+</body>
+</html>

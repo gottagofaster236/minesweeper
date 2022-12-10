@@ -150,7 +150,8 @@ unit_validGenerateMineFieldParameters = do
     assertBool "(2, 3), 3 is ok" $ isJust $ generateMineFieldWithGen (2, 3) 3
     assertBool "(2, 3), 7 has too many mines" $ isNothing $ generateMineFieldWithGen (2, 3) 7
     assertBool "(-2, 3), 1 has a negative width" $ isNothing $ generateMineFieldWithGen (-2, 3) 1
-    assertBool "(1000, 1000), 7 is too big" $ isNothing $ generateMineFieldWithGen (1000, 1000) 7
+    assertBool "(1000, 1), 7 is too big" $ isNothing $ generateMineFieldWithGen (1000, 1) 7
+    assertBool "(1, 1000), 7 is too big" $ isNothing $ generateMineFieldWithGen (1, 1000) 7
 
 oneByOneField =
     MineField
