@@ -50,9 +50,9 @@ app = do
 
 appWithoutState :: ScottyT Text AppStateM ()
 appWithoutState = do
-    defaultHandler $ \errorText -> do
+    defaultHandler $ \errorMessage -> do
         status status400
-        text errorText
+        text errorMessage
     get "/" $ file "./static/game.html"
     get "/game/:gameId" $ file "./static/game.html"
     post "/newGame" $ do
@@ -74,13 +74,13 @@ newGameRequest fieldWidth fieldHeight minesCount = do
         liftIO $
         evalRandIO $ generateMineField (fieldWidth, fieldHeight) minesCount
     case mineFieldMaybe of
-        Just mineField -> do
+        Right mineField -> do
             appStateM $
                 modifyState $ \state -> do
                     let newGames = Map.insert gameId mineField (games state)
                     state {games = newGames}
             json $ Map.singleton ("gameId" :: String) gameId
-        Nothing -> raise $ stringError "Invalid width, height, or mine count"
+        Left errorMessage -> raise $ stringError errorMessage
 
 randomGameId :: (RandomGen g) => Rand g String
 randomGameId = do

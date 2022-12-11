@@ -75,7 +75,7 @@ unit_newGameErrors = serverTest $ do
     responseTooManyMines <-
         post "/newGame?fieldWidth=5&fieldHeight=5&minesCount=100&"
     assertStatus 400 responseTooManyMines
-    assertBody "Invalid width, height, or mine count" responseTooManyMines
+    assertBody "Invalid mines count" responseTooManyMines
 
 newGameId :: T.HasCallStack => (Int, Int) -> Int -> Session String
 newGameId (fieldWidth, fieldHeight) minesCount = do
@@ -117,7 +117,7 @@ unit_openCell = serverTest $ do
     assertStatus 200 responseOpenCell
     assertFieldMatches [qq| {"cellLabels": ["0"], ...} |] gameId
 
-unit_openCellErrors = testCellActionErrors "/openCell"
+unit_openCellErrors = testCellActionErrors "openCell"
 
 unit_flagCell = serverTest $ do
     gameId <- newGameId (1, 1) 0
@@ -126,16 +126,22 @@ unit_flagCell = serverTest $ do
     assertStatus 200 responseOpenCell
     assertFieldMatches [qq| {"cellLabels": ["F"], ...} |] gameId
 
-unit_flagCellErrors = testCellActionErrors "/flagCell"
+unit_flagCellErrors = testCellActionErrors "flagCell"
 
 testCellActionErrors action = serverTest $ do
+    responseInvalidGameId <- post $ BS.pack $ "/game/invalidGameId/" ++ action ++ "?x=0&y=0"
+    assertStatus 400 responseInvalidGameId
+    assertBody "Invalid gameId" responseInvalidGameId
+
     gameId <- newGameId (1, 1) 0
-    responseOutOfBounds <- post $ BS.pack $ "/game/" ++ gameId ++ action ++ "?x=3&y=2"
+    let gamePrefix = "/game/" ++ gameId ++ "/"
+
+    responseOutOfBounds <- post $ BS.pack $ gamePrefix ++ action ++ "?x=3&y=2"
     assertStatus 400 responseOutOfBounds
     assertBody "Invalid x or y" responseOutOfBounds
     
-    -- If a 1x1 field has one mine, the game is already won before the first move.
-    finishedGameId <- newGameId (1, 1) 1
-    responseFinished <- post $ BS.pack $ "/game/" ++ finishedGameId ++ action ++ "?x=0&y=0"
-    assertStatus 400 responseFinished
-    assertBody "Game is finished already" responseFinished
+    responseFinalMove <- post $ BS.pack $ gamePrefix ++ "openCell?x=0&y=0"
+    assertStatus 200 responseFinalMove
+    responseGameFinished <- post $ BS.pack $ gamePrefix ++ action ++ "?x=0&y=0"
+    assertStatus 400 responseGameFinished
+    assertBody "Game is finished already" responseGameFinished
